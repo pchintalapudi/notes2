@@ -1,16 +1,23 @@
 <template>
-  <router-view/>
+  <router-view class="router-view" :style="theme"/>
 </template>
 <script lang="ts">
 import Vue from "vue";
-export default Vue.extend({});
+import { themeStringifier } from "./theme";
+export default Vue.extend({
+  computed: {
+    theme: function() {
+      return themeStringifier(this.$store.state.theme.theme);
+    }
+  }
+});
 </script>
 <style>
 body * {
   box-sizing: border-box;
   display: flex;
 }
-:root {
+.router-view {
   --bg-primary: rgb(var(--c-bg-primary));
   --bg-contrast: rgb(var(--c-bg-contrast));
   --focus-primary: rgb(var(--c-focus-primary));
@@ -23,5 +30,24 @@ body * {
   --cfocus-sel: rgba(var(--c-focus-contrast), var(--n-sel-transp));
   --cfocus-hov: rgba(var(--c-focus-contrast), var(--n-hov-transp));
   --cfocus-act: rgba(var(--c-focus-contrast), var(--n-act-transp));
+
+  --bg-mprimary: rgba(var(--c-bg-mprimary));
+  --bg-mcontrast: rgba(var(--c-bg-mcontrast));
+}
+.router-view {
+  height: 100%;
+  width: 100%;
+  color: var(--bg-contrast);
+}
+* {
+  margin: 0;
+  padding: 0;
+  border-style: none;
+  background-color: var(--bg-primary);
+}
+html,
+body {
+  height: 100%;
+  width: 100%;
 }
 </style>

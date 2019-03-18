@@ -1,13 +1,14 @@
 <template>
   <div class="home">
-    <img alt="Vue logo" src="../assets/logo.png">
+    <cube-logo/>
   </div>
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
-
+import Vue from "vue";
+import CubeVue from "./Cube.vue";
 export default Vue.extend({
-  name: 'home'
+  name: "home",
+  components: { "cube-logo": CubeVue }
 });
 </script>
