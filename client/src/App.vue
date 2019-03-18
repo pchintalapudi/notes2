@@ -1,31 +1,27 @@
 <template>
-  <div id="app">
-    <div id="nav">
-      <router-link to="/">Home</router-link> |
-      <router-link to="/about">About</router-link>
-    </div>
-    <router-view/>
-  </div>
+  <router-view/>
 </template>
-
+<script lang="ts">
+import Vue from "vue";
+export default Vue.extend({});
+</script>
 <style>
-#app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
+body * {
+  box-sizing: border-box;
+  display: flex;
 }
-#nav {
-  padding: 30px;
-}
+:root {
+  --bg-primary: rgb(var(--c-bg-primary));
+  --bg-contrast: rgb(var(--c-bg-contrast));
+  --focus-primary: rgb(var(--c-focus-primary));
+  --focus-contrast: rgb(var(--c-focus-contrast));
 
-#nav a {
-  font-weight: bold;
-  color: #2c3e50;
-}
+  --focus-sel: rgba(var(--c-focus-primary), var(--n-sel-transp));
+  --focus-hov: rgba(var(--c-focus-primary), var(--n-hov-transp));
+  --focus-act: rgba(var(--c-focus-primary), var(--n-act-transp));
 
-#nav a.router-link-exact-active {
-  color: #42b983;
+  --cfocus-sel: rgba(var(--c-focus-contrast), var(--n-sel-transp));
+  --cfocus-hov: rgba(var(--c-focus-contrast), var(--n-hov-transp));
+  --cfocus-act: rgba(var(--c-focus-contrast), var(--n-act-transp));
 }
 </style>
