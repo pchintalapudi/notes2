@@ -26,16 +26,16 @@ function luminance(color: Color) {
 function muted(color: Color, muteFactor: number) {
   let luma = luminance(color);
   return rgb({
-    red: color.red * (luma * muteFactor + 12.8),
-    green: color.green * (luma * muteFactor + 12.8),
-    blue: color.blue * (luma * muteFactor + 12.8)
+    red: color.red + (128 - luma) * muteFactor,
+    green: color.green + (128 - luma) * muteFactor,
+    blue: color.blue + (128 - luma) * muteFactor
   });
 }
 
 export { Color, Theme };
 
 export default function(theme: Theme) {
-  let muteFactor = 9 / 10;
+  let muteFactor = 1 / 5;
   return (
     "--c-bg-primary:" +
     rgb(theme.background) +

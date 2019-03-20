@@ -13,7 +13,7 @@ export default Vue.extend({
 });
 </script>
 <style>
-body * {
+body:not(.preview) * {
   box-sizing: border-box;
   display: flex;
 }

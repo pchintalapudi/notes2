@@ -25,6 +25,11 @@ export default new Router({
       path: "/editor",
       name: "editor",
       component: () => import("./views/Editor.vue")
+    },
+    {
+      path: "/mirror",
+      name: "mirror",
+      component: () => import("./views/MirrorView.vue")
     }
   ]
 });
