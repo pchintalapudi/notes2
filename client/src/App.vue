@@ -33,6 +33,9 @@ body:not(.preview) * {
 
   --bg-mprimary: rgba(var(--c-bg-mprimary));
   --bg-mcontrast: rgba(var(--c-bg-mcontrast));
+
+  --bg-tprimary: rgba(var(--c-bg-primary), var(--n-hov-transp));
+  --bg-tcontrast: rgba(var(--c-bg-contrast), var(--n-hov-transp));
 }
 .router-view {
   height: 100%;

@@ -7,7 +7,7 @@ let white = { red: 255, green: 255, blue: 255 },
   blue = { red: 0, green: 0, blue: 255 };
 
 let sgn = { red: 0, green: 128, blue: 255 };
-let transpStandards = [0.2, 0.35, 0.5];
+let transpStandards = [0.35, 0.5, 0.75];
 
 let standard = new Theme(
   white,
