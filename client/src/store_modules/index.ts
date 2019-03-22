@@ -1,2 +1,3 @@
 import theme from "./theme";
-export { theme };
+import real_time from "./real_time";
+export { theme, real_time };

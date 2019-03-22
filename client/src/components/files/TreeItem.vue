@@ -35,7 +35,7 @@ export default Vue.extend({
       });
     },
     children: function(): FileBase[] | null {
-      return this.file.fileType === FileType.FOLDER
+      return this.file.type === FileType.FOLDER
         ? (this.file as Folder).children
         : null;
     }

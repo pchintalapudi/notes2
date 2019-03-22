@@ -10,7 +10,6 @@
         cols="30"
         rows="10"
         v-model="rawText"
-        @input="update"
         @mousedown.stop
         :class="focused == -1 ? 'expand' : focused == 1 ? 'hide' : false"
       ></textarea>
@@ -31,12 +30,14 @@
 import Vue from "vue";
 import katex from "katex";
 import marked from "marked";
+import { diff_match_patch } from "diff-match-patch";
 import { themeStringifier } from "../../theme";
 const mathPattern = /(?:\$\$([\s\S]+?)\$\$)|(?:\\\\\[([\s\S]+?)\\\\\])|(?:\\\\\(([\s\S]+?)\\\\\))/g;
 const matrixPattern = /(?:\[(?:\/(s|b|B|p|v|V|(?:small))\/)?[\s]*([\s\S]+?;[\s\S]+?)\])/g;
 const colorPattern = /[^\\]`color:([\s\S]+?)`[\s\S]+?([\s\S]*?)[^\\]`/g;
 const arrowPattern = /(?:<!--([\s\S]*?)-->)|(?:(?:[\s]+|^)(-->)(?:[\s]+|$))|((?:[\s]+|^)(<--)(?:[\s]+)|$)|((?:[\s]+|^)<-->(?:[\s]+|$))/g;
 const implicitLatex = /(?:[\s]+?|^)([A-Za-z])(?:()|())/g;
+const differ: diff_match_patch = new diff_match_patch();
 export default Vue.extend({
   mounted: function() {
     this.iframe = this.$refs.preview as HTMLIFrameElement;
@@ -45,7 +46,6 @@ export default Vue.extend({
   },
   data: function() {
     return {
-      rawTextOld: "",
       rawText: "",
       iframe: undefined as HTMLIFrameElement | undefined,
       srcdocSupported: false,
@@ -54,22 +54,28 @@ export default Vue.extend({
       focused: 0
     };
   },
-  methods: {
-    update: function() {
+  watch: {
+    rawText: function(next, old) {
+      let diffs = differ.diff_cleanupEfficiency(differ.diff_main(old, next));
+      this.$store.dispatch("realTime/queueDiffs", diffs);
+    },
+    computedText: function(next) {
       let encoded = this.colorHandle(
         marked(this.encodeMath(this.arrow(this.rawText)))
       );
-      // if (!this.srcdocSupported) {
       this.iframe!.contentWindow!.postMessage(
         { type: "html", html: encoded },
         "*"
       );
-      // } else {
-      // this.encoded = this.style + encoded + "</body></html>";
-      // }
       localStorage.setItem("temp", encoded);
-      this.rawTextOld = this.rawText;
-    },
+    }
+  },
+  computed: {
+    computedText: function(): string {
+      return this.$store.getters["realTime/computedText"];
+    }
+  },
+  methods: {
     encodeMath: function(html: string): string {
       mathPattern.lastIndex = 0;
       return html
