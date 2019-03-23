@@ -1,13 +1,6 @@
 import { Module } from "vuex";
 import { Diff, diff_match_patch } from "diff-match-patch";
 const diff_applier = new diff_match_patch();
-function timeout(ms:number) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-async function sleep(fn: any, ...args: any) {
-  await timeout(3000);
-  return fn(...args);
-}
 let state = {
   //This should probably switch to a deque later.
   queuedDiffs: [] as Diff[],

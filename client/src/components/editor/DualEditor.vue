@@ -12,6 +12,7 @@
         v-model="rawText"
         @mousedown.stop
         :class="focused == -1 ? 'expand' : focused == 1 ? 'hide' : false"
+        @keydown.tab="filterTabs"
       ></textarea>
       <iframe
         :src="srcdocSupported ? '' : '/mirror'"
@@ -39,8 +40,6 @@ const colorPattern = /[^\\]`color:([\s\S]+?)`[\s\S]+?([\s\S]*?)[^\\]`/g;
 const arrowPattern = /(?:<!--([\s\S]*?)-->)|(?:(?:[\s]+|^)(-->)(?:[\s]+|$))|((?:[\s]+|^)(<--)(?:[\s]+)|$)|((?:[\s]+|^)<-->(?:[\s]+|$))/g;
 const implicitLatex = /(?:[\s]+?|^)([A-Za-z])(?:()|())/g;
 const differ: diff_match_patch = new diff_match_patch();
-const hljsswapper = (a: string, b: string, c: any) =>
-  hljs.highlight(b, a, c).value;
 export default Vue.extend({
   mounted: function() {
     this.iframe = this.$refs.preview as HTMLIFrameElement;
@@ -66,7 +65,8 @@ export default Vue.extend({
     computedText: function(next) {
       let encoded = this.colorHandle(
         marked(this.encodeMath(this.arrow(this.rawText)), {
-          highlight: hljsswapper
+          highlight: (a, b, c) =>
+            b ? hljs.highlight(b, a, c).value : hljs.highlightAuto(a, c).value
         })
       );
       this.iframe!.contentWindow!.postMessage(
@@ -148,6 +148,22 @@ export default Vue.extend({
     expand: function(arg: number) {
       this.expanding = false;
       this.focused = arg;
+    },
+    filterTabs: function(event: KeyboardEvent) {
+      if (!event.shiftKey && !event.ctrlKey && !event.metaKey) {
+        let text = this.rawText,
+          originalSelectionStart = (event.target as any).selectionStart,
+          textStart = text.slice(0, originalSelectionStart),
+          textEnd = text.slice(originalSelectionStart);
+        this.rawText = textStart + "\t" + textEnd;
+        (event.target as any).value = this.rawText;
+        this.$nextTick(
+          () =>
+            ((event.target as any).selectionEnd = (event.target as any).selectionStart =
+              originalSelectionStart + 1)
+        );
+        event.preventDefault();
+      }
     }
   }
 });
