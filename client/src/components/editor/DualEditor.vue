@@ -38,7 +38,7 @@ const mathPattern = /(?:\$\$([\s\S]+?)\$\$)|(?:\\\\\[([\s\S]+?)\\\\\])|(?:\\\\\(
 const matrixPattern = /(?:\[(?:\/(s|b|B|p|v|V|(?:small))\/)?[\s]*([\s\S]+?;[\s\S]+?)\])/g;
 const colorPattern = /[^\\]`color:([\s\S]+?)`[\s\S]+?([\s\S]*?)[^\\]`/g;
 const arrowPattern = /(?:<!--([\s\S]*?)-->)|(?:(?:[\s]+|^)(-->)(?:[\s]+|$))|((?:[\s]+|^)(<--)(?:[\s]+)|$)|((?:[\s]+|^)<-->(?:[\s]+|$))/g;
-const implicitLatex = /(?:[\s]+?|^)([A-Za-z])(?:()|())/g;
+const implicitLatex = /(?:[\s]+?|^)([A-Za-z\d()]+[\s]?[\^+/\-=][\s]*?(?:[A-Za-z\d]*?[\s)]?[\^+/\-*=()][\s]?)*[A-Za-z\d)]+)/g;
 const differ: diff_match_patch = new diff_match_patch();
 export default Vue.extend({
   mounted: function() {
@@ -84,12 +84,14 @@ export default Vue.extend({
   methods: {
     encodeMath: function(html: string): string {
       mathPattern.lastIndex = 0;
+      implicitLatex.lastIndex = 0;
       return html
         .replace("\\\\", "\0")
         .split(/\\\$/)
         .join(String.fromCharCode(16))
         .replace(mathPattern, this.replMath)
-        .replace("\0", "\\\\");
+        .replace("\0", "\\\\")
+        .replace(implicitLatex, this.replImplicit);
     },
     replMath: function(
       match: string,
@@ -105,6 +107,9 @@ export default Vue.extend({
         str.split(String.fromCharCode(16)).join("\\$"),
         { throwOnError: false, displayMode: !!displayMode }
       );
+    },
+    replImplicit: function(match: string, p1: string) {
+      return match.substring(0, match.indexOf(p1)) + katex.renderToString(p1.replace('*', '\\cdot '));
     },
     replMatrix: function(match: string, p1: string, p2: string) {
       return (
