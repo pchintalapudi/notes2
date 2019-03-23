@@ -56,7 +56,8 @@ export default Vue.extend({
   },
   watch: {
     rawText: function(next, old) {
-      let diffs = differ.diff_cleanupEfficiency(differ.diff_main(old, next));
+      let diffs = differ.diff_main(old, next);
+      differ.diff_cleanupEfficiency(diffs);
       this.$store.dispatch("realTime/queueDiffs", diffs);
     },
     computedText: function(next) {
