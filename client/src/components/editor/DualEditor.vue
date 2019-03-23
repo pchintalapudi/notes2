@@ -30,6 +30,7 @@
 import Vue from "vue";
 import katex from "katex";
 import marked from "marked";
+import hljs from "highlightjs";
 import { diff_match_patch } from "diff-match-patch";
 import { themeStringifier } from "../../theme";
 const mathPattern = /(?:\$\$([\s\S]+?)\$\$)|(?:\\\\\[([\s\S]+?)\\\\\])|(?:\\\\\(([\s\S]+?)\\\\\))/g;
@@ -38,6 +39,8 @@ const colorPattern = /[^\\]`color:([\s\S]+?)`[\s\S]+?([\s\S]*?)[^\\]`/g;
 const arrowPattern = /(?:<!--([\s\S]*?)-->)|(?:(?:[\s]+|^)(-->)(?:[\s]+|$))|((?:[\s]+|^)(<--)(?:[\s]+)|$)|((?:[\s]+|^)<-->(?:[\s]+|$))/g;
 const implicitLatex = /(?:[\s]+?|^)([A-Za-z])(?:()|())/g;
 const differ: diff_match_patch = new diff_match_patch();
+const hljsswapper = (a: string, b: string, c: any) =>
+  hljs.highlight(b, a, c).value;
 export default Vue.extend({
   mounted: function() {
     this.iframe = this.$refs.preview as HTMLIFrameElement;
@@ -62,7 +65,9 @@ export default Vue.extend({
     },
     computedText: function(next) {
       let encoded = this.colorHandle(
-        marked(this.encodeMath(this.arrow(this.rawText)))
+        marked(this.encodeMath(this.arrow(this.rawText)), {
+          highlight: hljsswapper
+        })
       );
       this.iframe!.contentWindow!.postMessage(
         { type: "html", html: encoded },
