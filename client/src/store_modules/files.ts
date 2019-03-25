@@ -10,6 +10,7 @@ let state = {
 type StateType = { [P in keyof typeof state]: (typeof state)[P] };
 
 let module: Module<StateType, any> = {
+  namespaced:true,
   state,
   mutations: {
     setRootFile: function(state, rootFile: FileBase) {

@@ -31,10 +31,10 @@
 import Vue from "vue";
 import katex from "katex";
 import marked from "marked";
-import hljs from "highlightjs";
+import hljs from "highlight.js";
 import { diff_match_patch } from "diff-match-patch";
 import { themeStringifier } from "../../theme";
-import { FileBase } from "../../files";
+import { TextNote } from "../../files";
 const mathPattern = /(?:\$\$([\s\S]+?)\$\$)|(?:\\\\\[([\s\S]+?)\\\\\])|(?:\\\\\(([\s\S]+?)\\\\\))/g;
 const matrixPattern = /(?:\[(?:\/(s|b|B|p|v|V|(?:small))\/)?[\s]*([\s\S]+?;[\s\S]+?)\])/g;
 const colorPattern = /(?:\\\\)*\\`color:([\s]*[\S]+?)(?:\\\\)*\\`[\s\S]+?([\s\S]*?)(?:\\\\)*\\`/g;
@@ -49,7 +49,6 @@ export default Vue.extend({
   },
   data: function() {
     return {
-      rawText: "",
       iframe: undefined as HTMLIFrameElement | undefined,
       srcdocSupported: false,
       encoded: "",
@@ -61,21 +60,29 @@ export default Vue.extend({
     computedText: function(next) {}
   },
   computed: {
-    file: function(): FileBase {
-      return this.$store.files.editing;
+    file: function(): TextNote {
+      return this.$store.state.files.editing;
     },
     rawText: {
-      get: function() {
-        return this.file.payload.computedText;
+      get: function(): string {
+        return this.file.payload.text;
       },
-      set: function(text) {
-        let diffs = differ.diff_main(this.file.computedText, text);
+      set: function(text: string) {
+        let diffs = differ.diff_main(this.rawText, text);
         differ.diff_cleanupEfficiency(diffs);
         this.file.payload.queueDiffs(diffs);
         let encoded = this.colorHandle(
           marked(this.encodeMath(this.arrow(text)), {
-            highlight: (a, b, c) =>
-              b ? hljs.highlight(b, a, c).value : hljs.highlightAuto(a, c).value
+            highlight: (a, b, c) => {
+              try {
+                return b
+                  ? hljs.highlight(b, a).value
+                  : hljs.highlightAuto(a).value;
+              } catch (err) {
+                if (c) c(err, err ? (err as Error).name : "");
+                return "";
+              }
+            }
           })
         );
         this.iframe!.contentWindow!.postMessage(

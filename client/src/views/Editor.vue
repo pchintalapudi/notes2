@@ -1,7 +1,7 @@
 <template>
   <main class="main">
     <nav class="tree"></nav>
-    <section class="editing">
+    <section v-if="editing" class="editing">
       <tab-row></tab-row>
       <dual-edit/>
     </section>
@@ -26,6 +26,11 @@ export default Vue.extend({
     };
     this.$store.commit("files/setRootFile", file);
     this.$store.commit("files/open", file);
+  },
+  computed: {
+    editing: function(): boolean {
+      return !!this.$store.state.files.editing;
+    }
   }
 });
 </script>
@@ -39,6 +44,7 @@ export default Vue.extend({
 }
 .editing {
   flex: 0.75;
+  flex-flow: column nowrap;
 }
 .editing:first-child {
   flex: 0.1;
@@ -47,9 +53,6 @@ export default Vue.extend({
   overflow: auto;
 }
 .editing > :last-child {
-  flex: 0.9;
-  display: flex;
-  width: 100%;
-  flex-flow: column nowrap;
+  flex: 1;
 }
 </style>

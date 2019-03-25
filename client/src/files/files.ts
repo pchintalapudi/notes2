@@ -30,7 +30,7 @@ class NotePayload {
     if (diffs.length) {
       this.queuedDiffs.push(...diffs);
       //Send an update request.
-      serverSimulator(this._serverText, this.queuedDiffs).then(s => {
+      serverSimulator(this._serverText, diffs).then(s => {
         this._serverText = s;
         this.queuedDiffs.splice(
           this.queuedDiffs.indexOf(diffs[0]),
@@ -41,17 +41,19 @@ class NotePayload {
     }
   }
 
-  set serverText(serverText: string) {
+  set text(serverText: string) {
     this._serverText = serverText;
     this.computed = undefined;
   }
 
-  get computedText() {
+  get text() {
     return this.computed === undefined
-      ? diff_applier.patch_apply(
-          diff_applier.patch_make(this.serverText, this.queuedDiffs),
-          this.serverText
-        )[0]
+      ? this.queuedDiffs.length
+        ? diff_applier.patch_apply(
+            diff_applier.patch_make(this._serverText, this.queuedDiffs),
+            this._serverText
+          )[0]
+        : (this.computed = this._serverText)
       : this.computed;
   }
 
