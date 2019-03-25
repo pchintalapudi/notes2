@@ -13,6 +13,7 @@
         @mousedown.stop
         :class="focused == -1 ? 'expand' : focused == 1 ? 'hide' : false"
         @keydown.tab="filterTabs"
+        ref="editor"
       ></textarea>
       <iframe
         :src="srcdocSupported ? '' : '/mirror'"
@@ -29,17 +30,21 @@
 </template>
 <script lang="ts">
 import Vue from "vue";
-import katex from "katex";
+import math from "../../editor/math";
 import marked from "marked";
 import hljs from "highlight.js";
 import { diff_match_patch } from "diff-match-patch";
 import { themeStringifier } from "../../theme";
 import { TextNote } from "../../files";
-const mathPattern = /(?:\$\$([\s\S]+?)\$\$)|(?:\\\\\[([\s\S]+?)\\\\\])|(?:\\\\\(([\s\S]+?)\\\\\))/g;
-const matrixPattern = /(?:\[(?:\/(s|b|B|p|v|V|(?:small))\/)?[\s]*([\s\S]+?;[\s\S]+?)\])/g;
+//Polyfill
+interface InputEvent extends UIEvent {
+  readonly data: string;
+  readonly dataTransfer: DataTransfer;
+  readonly inputType: string;
+  readonly isComposing: boolean;
+}
 const colorPattern = /(?:\\\\)*\\`color:([\s]*[\S]+?)(?:\\\\)*\\`[\s\S]+?([\s\S]*?)(?:\\\\)*\\`/g;
 const arrowPattern = /(?:<!--([\s\S]*?)-->)|(?:(?:[\s]+|^)(-->)(?:[\s]+|$))|((?:[\s]+|^)(<--)(?:[\s]+)|$)|((?:[\s]+|^)<-->(?:[\s]+|$))/g;
-const implicitLatex = /(?:[\s]+?|^)([A-Za-z\d{}]+[\s]?[\^+/\-=][\s]*?(?:[A-Za-z\d{}]*?\)*[\s]?[\^+/\-*=_]\(*[\s]?)*[A-Za-z\d{}]+\)*)/g;
 const differ: diff_match_patch = new diff_match_patch();
 export default Vue.extend({
   mounted: function() {
@@ -53,11 +58,18 @@ export default Vue.extend({
       srcdocSupported: false,
       encoded: "",
       expanding: false,
-      focused: 0
+      focused: 0,
+      cursor: undefined
     };
   },
-  watch: {
-    computedText: function(next) {}
+  watch: {},
+  beforeUpdate: function() {
+    if (this.cursor === undefined) {
+      let start = this.textArea.selectionStart;
+      console.log(start);
+      this.saveCursor(start);
+      this.cursor = start;
+    }
   },
   computed: {
     file: function(): TextNote {
@@ -91,52 +103,13 @@ export default Vue.extend({
         );
         localStorage.setItem("temp", encoded);
       }
+    },
+    textArea: function(): HTMLTextAreaElement {
+      return this.$refs["editor"] as HTMLTextAreaElement;
     }
   },
   methods: {
-    encodeMath: function(html: string): string {
-      mathPattern.lastIndex = 0;
-      implicitLatex.lastIndex = 0;
-      return html
-        .replace("\\\\", "\0")
-        .split(/\\\$/)
-        .join(String.fromCharCode(16))
-        .replace(mathPattern, this.replMath)
-        .replace("\0", "\\\\");
-      // .replace(implicitLatex, this.replImplicit);
-    },
-    replMath: function(
-      match: string,
-      p1: string,
-      p2: string,
-      p3: string
-    ): string {
-      let str = p1 || p2 || p3;
-      matrixPattern.lastIndex = 0;
-      str = str.replace(matrixPattern, this.replMatrix);
-      let displayMode = p1 || p2;
-      return katex.renderToString(
-        str.split(String.fromCharCode(16)).join("\\$"),
-        { throwOnError: false, displayMode: !!displayMode }
-      );
-    },
-    replImplicit: function(match: string, p1: string) {
-      return (
-        match.substring(0, match.indexOf(p1)) +
-        katex.renderToString(p1.replace("*", "\\cdot "))
-      );
-    },
-    replMatrix: function(match: string, p1: string, p2: string) {
-      return (
-        "\\begin{" +
-        (p1 || "b") +
-        "matrix}" +
-        p2.replace(/;[\s]*/g, "\\\\").replace(/[\s]{2,}/g, "&") +
-        "\\end{" +
-        (p1 || "b") +
-        "matrix}"
-      );
-    },
+    ...math,
     colorHandle: function(html: string) {
       colorPattern.lastIndex = 0;
       return html.replace(colorPattern, this.replColor);
@@ -169,20 +142,25 @@ export default Vue.extend({
       this.expanding = false;
       this.focused = arg;
     },
+    saveCursor: function(end: number) {
+      let textArea = this.$refs["editor"] as HTMLTextAreaElement;
+      this.$nextTick(() => {
+        textArea.selectionEnd = textArea.selectionStart = end;
+        this.cursor = undefined;
+      });
+    },
     filterTabs: function(event: KeyboardEvent) {
       if (!event.shiftKey && !event.ctrlKey && !event.metaKey) {
         let text = this.rawText,
           originalSelectionStart = (event.target as any).selectionStart,
           textStart = text.slice(0, originalSelectionStart),
-          textEnd = text.slice(originalSelectionStart);
+          textEnd = text.slice(originalSelectionStart),
+          start = this.textArea.selectionStart;
         this.rawText = textStart + "\t" + textEnd;
         (event.target as any).value = this.rawText;
-        this.$nextTick(
-          () =>
-            ((event.target as any).selectionEnd = (event.target as any).selectionStart =
-              originalSelectionStart + 1)
-        );
         event.preventDefault();
+        this.saveCursor(start + 1);
+        this.cursor = start + 1;
       }
     }
   }
