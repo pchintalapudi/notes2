@@ -34,11 +34,12 @@ import marked from "marked";
 import hljs from "highlightjs";
 import { diff_match_patch } from "diff-match-patch";
 import { themeStringifier } from "../../theme";
+import { FileBase } from "../../files";
 const mathPattern = /(?:\$\$([\s\S]+?)\$\$)|(?:\\\\\[([\s\S]+?)\\\\\])|(?:\\\\\(([\s\S]+?)\\\\\))/g;
 const matrixPattern = /(?:\[(?:\/(s|b|B|p|v|V|(?:small))\/)?[\s]*([\s\S]+?;[\s\S]+?)\])/g;
-const colorPattern = /[^\\]`color:([\s\S]+?)`[\s\S]+?([\s\S]*?)[^\\]`/g;
+const colorPattern = /(?:\\\\)*\\`color:([\s]*[\S]+?)(?:\\\\)*\\`[\s\S]+?([\s\S]*?)(?:\\\\)*\\`/g;
 const arrowPattern = /(?:<!--([\s\S]*?)-->)|(?:(?:[\s]+|^)(-->)(?:[\s]+|$))|((?:[\s]+|^)(<--)(?:[\s]+)|$)|((?:[\s]+|^)<-->(?:[\s]+|$))/g;
-const implicitLatex = /(?:[\s]+?|^)([A-Za-z\d()]+[\s]?[\^+/\-=][\s]*?(?:[A-Za-z\d]*?[\s)]?[\^+/\-*=()][\s]?)*[A-Za-z\d)]+)/g;
+const implicitLatex = /(?:[\s]+?|^)([A-Za-z\d{}]+[\s]?[\^+/\-=][\s]*?(?:[A-Za-z\d{}]*?\)*[\s]?[\^+/\-*=_]\(*[\s]?)*[A-Za-z\d{}]+\)*)/g;
 const differ: diff_match_patch = new diff_match_patch();
 export default Vue.extend({
   mounted: function() {
@@ -57,28 +58,32 @@ export default Vue.extend({
     };
   },
   watch: {
-    rawText: function(next, old) {
-      let diffs = differ.diff_main(old, next);
-      differ.diff_cleanupEfficiency(diffs);
-      this.$store.dispatch("realTime/queueDiffs", diffs);
-    },
-    computedText: function(next) {
-      let encoded = this.colorHandle(
-        marked(this.encodeMath(this.arrow(this.rawText)), {
-          highlight: (a, b, c) =>
-            b ? hljs.highlight(b, a, c).value : hljs.highlightAuto(a, c).value
-        })
-      );
-      this.iframe!.contentWindow!.postMessage(
-        { type: "html", html: encoded },
-        "*"
-      );
-      localStorage.setItem("temp", encoded);
-    }
+    computedText: function(next) {}
   },
   computed: {
-    computedText: function(): string {
-      return this.$store.getters["realTime/computedText"];
+    file: function(): FileBase {
+      return this.$store.files.editing;
+    },
+    rawText: {
+      get: function() {
+        return this.file.payload.computedText;
+      },
+      set: function(text) {
+        let diffs = differ.diff_main(this.file.computedText, text);
+        differ.diff_cleanupEfficiency(diffs);
+        this.file.payload.queueDiffs(diffs);
+        let encoded = this.colorHandle(
+          marked(this.encodeMath(this.arrow(text)), {
+            highlight: (a, b, c) =>
+              b ? hljs.highlight(b, a, c).value : hljs.highlightAuto(a, c).value
+          })
+        );
+        this.iframe!.contentWindow!.postMessage(
+          { type: "html", html: encoded },
+          "*"
+        );
+        localStorage.setItem("temp", encoded);
+      }
     }
   },
   methods: {
@@ -90,8 +95,8 @@ export default Vue.extend({
         .split(/\\\$/)
         .join(String.fromCharCode(16))
         .replace(mathPattern, this.replMath)
-        .replace("\0", "\\\\")
-        .replace(implicitLatex, this.replImplicit);
+        .replace("\0", "\\\\");
+      // .replace(implicitLatex, this.replImplicit);
     },
     replMath: function(
       match: string,
@@ -109,7 +114,10 @@ export default Vue.extend({
       );
     },
     replImplicit: function(match: string, p1: string) {
-      return match.substring(0, match.indexOf(p1)) + katex.renderToString(p1.replace('*', '\\cdot '));
+      return (
+        match.substring(0, match.indexOf(p1)) +
+        katex.renderToString(p1.replace("*", "\\cdot "))
+      );
     },
     replMatrix: function(match: string, p1: string, p2: string) {
       return (

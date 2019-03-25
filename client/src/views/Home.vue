@@ -4,10 +4,9 @@
 
 <script lang="ts">
 import Vue from "vue";
-import CubeVue from "./Cube.vue";
 export default Vue.extend({
   name: "home",
-  components: { "cube-logo": CubeVue },
+  components: { "cube-logo": () => import("./Cube.vue") },
   methods: {
     goToEditor: function() {
       window.location.pathname = "editor";

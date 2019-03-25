@@ -5,9 +5,10 @@
 </template>
 <script lang="ts">
 import Vue from "vue";
-import PreviewVue from "../components/editor/Preview.vue";
 export default Vue.extend({
-  components: { "preview-viewer": PreviewVue }
+  components: {
+    "preview-viewer": () => import("../components/editor/Preview.vue")
+  }
 });
 </script>
 <style scoped>

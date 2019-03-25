@@ -9,7 +9,7 @@
 </template>
 <script lang="ts">
 import Vue from "vue";
-import { FileBase, FileType, Folder } from "../../files";
+import { FileBase, FileType, NoteFolder } from "../../files";
 export default Vue.extend({
   props: {
     file: Object as () => FileBase
@@ -36,7 +36,7 @@ export default Vue.extend({
     },
     children: function(): FileBase[] | null {
       return this.file.type === FileType.FOLDER
-        ? (this.file as Folder).children
+        ? (this.file as NoteFolder).children
         : null;
     }
   },

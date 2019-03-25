@@ -1,29 +1,29 @@
-interface Color {
+interface CSSColor {
   red: number;
   green: number;
   blue: number;
 }
 class Theme {
   constructor(
-    public background: Color,
-    public cBackground: Color,
-    public focus: Color,
-    public cFocus: Color,
+    public background: CSSColor,
+    public cBackground: CSSColor,
+    public focus: CSSColor,
+    public cFocus: CSSColor,
     public tsel: number,
     public thov: number,
     public tact: number
   ) {}
 }
 
-function rgb(color: Color) {
+function rgb(color: CSSColor) {
   return color.red + ", " + color.green + ", " + color.blue;
 }
 
-function luminance(color: Color) {
+function luminance(color: CSSColor) {
   return 0.2126 * color.red + 0.7152 * color.green + 0.0722 * color.blue;
 }
 
-function muted(color: Color, muteFactor: number) {
+function muted(color: CSSColor, muteFactor: number) {
   let luma = luminance(color);
   return rgb({
     red: color.red + (128 - luma) * muteFactor,
@@ -32,7 +32,7 @@ function muted(color: Color, muteFactor: number) {
   });
 }
 
-export { Color, Theme };
+export { CSSColor , Theme };
 
 export default function(theme: Theme) {
   let muteFactor = 1 / 5;

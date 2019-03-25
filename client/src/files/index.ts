@@ -1,2 +1,2 @@
-import { Folder, FileBase, FileType, Note } from "./files";
-export { Folder, FileBase, FileType, Note };
+import { NoteFolder, FileBase, FileType, TextNote, NotePayload } from "./files";
+export { NoteFolder, FileBase, FileType, TextNote, NotePayload };
