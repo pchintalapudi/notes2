@@ -59,7 +59,7 @@ export default Vue.extend({
       encoded: "",
       expanding: false,
       focused: 0,
-      cursor: undefined
+      cursor: undefined as undefined | number
     };
   },
   watch: {},
