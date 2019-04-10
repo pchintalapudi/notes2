@@ -9,7 +9,7 @@
         id="editor"
         cols="30"
         rows="10"
-        v-model="rawText"
+        v-model="shownText"
         @mousedown.stop
         :class="focused == -1 ? 'expand' : focused == 1 ? 'hide' : false"
         @keydown.tab="filterTabs"
@@ -51,25 +51,21 @@ export default Vue.extend({
     this.iframe = this.$refs.preview as HTMLIFrameElement;
     this.srcdocSupported =
       false && "srcdoc" in document.createElement("iframe");
+    this.shownText = this.rawText;
+    this.textArea = this.$refs["editor"] as HTMLTextAreaElement;
+    // this.resetCursorBase();
   },
   data: function() {
     return {
       iframe: undefined as HTMLIFrameElement | undefined,
+      textArea: undefined as HTMLTextAreaElement | undefined,
       srcdocSupported: false,
       encoded: "",
       expanding: false,
       focused: 0,
-      cursor: undefined as undefined | number
+      shownText: "",
+      shownOffset: 0
     };
-  },
-  watch: {},
-  beforeUpdate: function() {
-    if (this.cursor === undefined) {
-      let start = this.textArea.selectionStart;
-      console.log(start);
-      this.saveCursor(start);
-      this.cursor = start;
-    }
   },
   computed: {
     file: function(): TextNote {
@@ -103,9 +99,21 @@ export default Vue.extend({
         );
         localStorage.setItem("temp", encoded);
       }
+    }
+  },
+  watch: {
+    rawText: function(next, old) {
+      let originalSelectionStart = this.textArea!.selectionEnd;
+      this.shownText = next;
+      this.offsetCursor(
+        originalSelectionStart,
+        next.length - old.length - this.shownOffset
+      );
+      this.shownOffset = 0;
     },
-    textArea: function(): HTMLTextAreaElement {
-      return this.$refs["editor"] as HTMLTextAreaElement;
+    shownText: function(next, old) {
+      this.shownOffset += next.length - old.length;
+      this.rawText = next;
     }
   },
   methods: {
@@ -142,26 +150,26 @@ export default Vue.extend({
       this.expanding = false;
       this.focused = arg;
     },
-    saveCursor: function(end: number) {
-      let textArea = this.$refs["editor"] as HTMLTextAreaElement;
-      this.$nextTick(() => {
-        textArea.selectionEnd = textArea.selectionStart = end;
-        this.cursor = undefined;
-      });
-    },
     filterTabs: function(event: KeyboardEvent) {
       if (!event.shiftKey && !event.ctrlKey && !event.metaKey) {
         let text = this.rawText,
           originalSelectionStart = (event.target as any).selectionStart,
           textStart = text.slice(0, originalSelectionStart),
           textEnd = text.slice(originalSelectionStart),
-          start = this.textArea.selectionStart;
-        this.rawText = textStart + "\t" + textEnd;
+          start = this.textArea!.selectionStart;
+        this.rawText = textStart + "  " + textEnd;
         (event.target as any).value = this.rawText;
         event.preventDefault();
-        this.saveCursor(start + 1);
-        this.cursor = start + 1;
+        this.offsetCursor(originalSelectionStart, 2);
       }
+    },
+    offsetCursor(start: number, offset: number) {
+      window.setTimeout(
+        () =>
+          (this.textArea!.selectionStart = this.textArea!.selectionEnd =
+            start + offset),
+        0
+      );
     }
   }
 });
